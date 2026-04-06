@@ -167,7 +167,7 @@
   <div class="wrap">
     <div class="card">
       <h1>Leitor de Código de Barras</h1>
-      <p>Escaneie o produto, o sistema busca o nome na sua base e você adiciona apenas o preço.</p>
+      <p>Escaneie o produto, o sistema busca o nome na sua base e você adiciona apenas o preço. Ao salvar, o sistema grava automaticamente a data e hora do registro.</p>
       <p class="small">Base carregada: <strong id="totalItens"></strong> códigos.</p>
       <div class="tag">Concorrentes base: Ultrabox SANTA MARIA, Atac. Dia a Dia NOVO GAMA, Tatico SANTA MARIA</div>
       <div class="tag" style="background:#ecfdf5;color:#166534;">Salvamento automático no aparelho: os itens ficam guardados mesmo se o navegador fechar</div>
@@ -204,12 +204,7 @@
             <input id="date" type="date" />
           </div>
         </div>
-
         <div class="grid two">
-          <div>
-            <label for="minutagem">Minutagem feita</label>
-            <input id="minutagem" placeholder="Ex.: 15 min" />
-          </div>
           <div>
             <label for="local">Local / Concorrente</label>
             <select id="local">
@@ -220,6 +215,7 @@
               <option value="Outro">Outro</option>
             </select>
           </div>
+          <div></div>
         </div>
 
         <div id="otherLocalWrap" style="display:none;">
@@ -250,7 +246,7 @@
               <th>Produto</th>
               <th>Preço</th>
               <th>Data</th>
-              <th>Minutagem</th>
+              <th>Data/Hora</th>
               <th>Local</th>
               <th>Ação</th>
             </tr>
@@ -270,7 +266,6 @@
     const barcodeInput = document.getElementById("barcode");
     const priceInput = document.getElementById("price");
     const dateInput = document.getElementById("date");
-    const minutagemInput = document.getElementById("minutagem");
     const localInput = document.getElementById("local");
     const otherLocalInput = document.getElementById("otherLocal");
     const otherLocalWrap = document.getElementById("otherLocalWrap");
@@ -287,6 +282,12 @@
       const d = new Date();
       const pad = n => String(n).padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    function formatDateTimeNow() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}, às ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
     function showStatus(message, type = "ok") {
@@ -355,7 +356,6 @@
     function clearFields() {
       barcodeInput.value = "";
       priceInput.value = "";
-      minutagemInput.value = "";
       localInput.value = "";
       otherLocalInput.value = "";
       otherLocalWrap.style.display = "none";
@@ -384,7 +384,7 @@
           <td>${item.productName || ""}</td>
           <td>${item.price || ""}</td>
           <td>${item.date || ""}</td>
-          <td>${item.minutagem || ""}</td>
+          <td>${item.createdAt || ""}</td>
           <td>${item.local || ""}</td>
           <td><button class="danger" type="button" data-index="${index}">Excluir</button></td>
         `;
@@ -407,7 +407,7 @@
       }
 
       const rows = [
-        ["EAN","Produto","Preço","Data","Minutagem feita","Local"]
+        ["EAN","Produto","Preço","Data","Data/Hora do registro","Local"]
       ];
 
       items.forEach(item => {
@@ -416,7 +416,7 @@
           item.productName || "",
           item.price || "",
           item.date || "",
-          item.minutagem || "",
+          item.createdAt || "",
           item.local || ""
         ]);
       });
@@ -500,7 +500,7 @@
 
       const price = formatPrice(priceInput.value);
       const date = dateInput.value || todayStr();
-      const minutagem = (minutagemInput.value || "").trim();
+      const createdAt = formatDateTimeNow();
       const local = getLocalValue();
 
       if (!price) {
@@ -521,7 +521,7 @@
         productName: product.productName,
         price,
         date,
-        minutagem,
+        createdAt,
         local
       });
       setSavedItems(items);
