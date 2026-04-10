@@ -196,8 +196,18 @@
 
         <div class="grid two">
           <div>
-            <label for="price">Preço</label>
+            <label for="price">Preço normal</label>
             <input id="price" inputmode="decimal" placeholder="Ex.: 12,99" />
+          </div>
+          <div>
+            <label for="wholesalePrice">Preço atacado</label>
+            <input id="wholesalePrice" inputmode="decimal" placeholder="Ex.: 10,99" />
+          </div>
+        </div>
+        <div class="grid two">
+          <div>
+            <label for="wholesaleQty">Atacado a partir de</label>
+            <input id="wholesaleQty" inputmode="numeric" placeholder="Ex.: 3" />
           </div>
           <div>
             <label for="date">Data</label>
@@ -230,7 +240,7 @@
           <button class="danger" id="clearListBtn" type="button">Apagar lista</button>
         </div>
 
-        <div class="hint">Dica: selecione o concorrente na lista para agilizar a coleta. Se precisar, escolha "Outro". Para a câmera funcionar no celular, abra em HTTPS ou servidor local com permissão de câmera.</div>
+        <div class="hint">Dica: selecione o concorrente na lista para agilizar a coleta. Se precisar, escolha "Outro". O preço atacado é opcional e pode ser salvo com a regra, por exemplo, "a partir de 3". Para a câmera funcionar no celular, abra em HTTPS ou servidor local com permissão de câmera.</div>
       </div>
     </div>
 
@@ -244,7 +254,9 @@
             <tr>
               <th>EAN</th>
               <th>Produto</th>
-              <th>Preço</th>
+              <th>Preço normal</th>
+              <th>Preço atacado</th>
+              <th>Atacado a partir de</th>
               <th>Data</th>
               <th>Data/Hora</th>
               <th>Local</th>
@@ -265,6 +277,8 @@
 
     const barcodeInput = document.getElementById("barcode");
     const priceInput = document.getElementById("price");
+    const wholesalePriceInput = document.getElementById("wholesalePrice");
+    const wholesaleQtyInput = document.getElementById("wholesaleQty");
     const dateInput = document.getElementById("date");
     const localInput = document.getElementById("local");
     const otherLocalInput = document.getElementById("otherLocal");
@@ -317,6 +331,10 @@
       return v;
     }
 
+    function formatWholesaleQty(value) {
+      return String(value || "").replace(/\D/g, "").trim();
+    }
+
     function getLocalValue() {
       if (localInput.value === "Outro") {
         return (otherLocalInput.value || "").trim();
@@ -356,6 +374,8 @@
     function clearFields() {
       barcodeInput.value = "";
       priceInput.value = "";
+      wholesalePriceInput.value = "";
+      wholesaleQtyInput.value = "";
       localInput.value = "";
       otherLocalInput.value = "";
       otherLocalWrap.style.display = "none";
@@ -383,6 +403,8 @@
           <td>${item.ean || ""}</td>
           <td>${item.productName || ""}</td>
           <td>${item.price || ""}</td>
+          <td>${item.wholesalePrice || ""}</td>
+          <td>${item.wholesaleQty ? `a partir de ${item.wholesaleQty}` : ""}</td>
           <td>${item.date || ""}</td>
           <td>${item.createdAt || ""}</td>
           <td>${item.local || ""}</td>
@@ -407,7 +429,7 @@
       }
 
       const rows = [
-        ["EAN","Produto","Preço","Data","Data/Hora do registro","Local"]
+        ["EAN","Produto","Preço normal","Preço atacado","Atacado a partir de","Data","Data/Hora do registro","Local"]
       ];
 
       items.forEach(item => {
@@ -415,6 +437,8 @@
           item.ean || "",
           item.productName || "",
           item.price || "",
+          item.wholesalePrice || "",
+          item.wholesaleQty ? `a partir de ${item.wholesaleQty}` : "",
           item.date || "",
           item.createdAt || "",
           item.local || ""
@@ -499,6 +523,8 @@
       if (!product) return;
 
       const price = formatPrice(priceInput.value);
+      const wholesalePrice = formatPrice(wholesalePriceInput.value);
+      let wholesaleQty = formatWholesaleQty(wholesaleQtyInput.value);
       const date = dateInput.value || todayStr();
       const createdAt = formatDateTimeNow();
       const local = getLocalValue();
@@ -507,6 +533,16 @@
         showStatus("Informe o preço do produto.", "warn");
         priceInput.focus();
         return;
+      }
+
+      if (wholesaleQty && !wholesalePrice) {
+        showStatus("Informe o preço atacado para usar a regra de atacado.", "warn");
+        wholesalePriceInput.focus();
+        return;
+      }
+
+      if (wholesalePrice && !wholesaleQty) {
+        wholesaleQty = "3";
       }
 
       if (!local) {
@@ -520,6 +556,8 @@
         ean: product.ean,
         productName: product.productName,
         price,
+        wholesalePrice,
+        wholesaleQty,
         date,
         createdAt,
         local
